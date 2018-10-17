@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -14,17 +15,32 @@ import android.os.StrictMode;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.frank.remotecontrol.model.Massage;
 import com.frank.remotecontrol.socket.SocketTransceiver;
 import com.frank.remotecontrol.socket.TcpClient;
+import com.frank.remotecontrol.utils.ListDataSave;
+import com.frank.remotecontrol.utils.SPUtils;
 import com.frank.remotecontrol.utils.Util;
 import com.frank.remotecontrol.utils.WifiHelp;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.Timer;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
@@ -32,21 +48,35 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private int PORT = 8899;
     private Button bnConnect;
     private TextView txReceive;
-    private EditText edIP, edPort, edData, edTimer;
+    private EditText edIP, edPort, edData, edTimer,edSaveName;
     private static boolean isExit = false;
 
-    private Button btnLightOn, btnLightOff, btnLightQuick, btnLightSlow;
+    private ListDataSave listDataSave;
+
+    private Button btnLightOn, btnLightOff, btnLightQuick, btnLightSlow,btnSave,btnRead;
 
     public Button btnTimer;
     ScheduleNotification notification = null;
     private WifiChangeReceiver wifiChangeReceiver;
     //private ScheduleTaskReceiver scheduleTaskReceiver;
-
+    public static final int SEND_DATA =1;
     private ScheduleNotification scheduleNotification;
    // public final static String ACTION_SCHEDULE_RECEIVER = "com.broadcast.schedule_receiver";
 
     private Handler handler = new Handler(Looper.getMainLooper());
 
+    private Handler socketHandler = new Handler(){
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            switch (msg.what){
+                case SEND_DATA:
+                    break;
+                default:
+                    break;
+            }
+        }
+    };
     private TcpClient client = new TcpClient() {
 
         @Override
@@ -98,14 +128,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        this.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.activity_main);
+
         if (android.os.Build.VERSION.SDK_INT > 9) {
             StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
             StrictMode.setThreadPolicy(policy);
         }
+        listDataSave = new ListDataSave(this, "data");
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+//        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+//        setSupportActionBar(toolbar);
 
         initView();
         registerBrodcastReceiver();
@@ -182,9 +218,57 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.btn_timer:
                 startTimeFn();
                 break;
+            case R.id.save_btn:
+                saveCustomModel();
+                break;
+            case R.id.read_btn:
+                readCustomModel();
+                break;
         }
     }
 
+    private void saveCustomModel(){
+        String name = edSaveName.getText().toString();
+        if("".equals(name)){
+
+            Toast.makeText(MainActivity.this, "名字不能为空",Toast.LENGTH_SHORT).show();
+            return;
+        }
+        Massage massage = new Massage();
+        massage.setName(name);
+
+//        SharedPreferences.Editor editor =getSharedPreferences("data",MODE_PRIVATE).edit();
+//        editor.putString("name",name);
+//
+//        editor.apply();
+       // List<String,Object> data = listDataSave.getDataList("name");
+        String strJson =(String)SPUtils.get(this,"name","");
+        Map<String,Massage> data = new Gson().fromJson(strJson, new TypeToken<Map<String,Massage>>() {}.getType());
+        if(data ==null){
+            data = new HashMap<String, Massage>();
+        }
+//        if(data.containsKey("name")){
+//            data.put("name",massage);
+//        }
+        data.put(name,massage);
+        SPUtils.put(this,"name",new Gson().toJson(data));
+       // listDataSave.setDataList("name",data);
+    }
+    private void readCustomModel(){
+//        SharedPreferences pref = getSharedPreferences("data",MODE_PRIVATE);
+//        pref.getAll();
+       // List<String> data = listDataSave.getDataList("name");
+        String strJson =(String)SPUtils.get(this,"name","");
+        Map<String,Massage> data = new Gson().fromJson(strJson, new TypeToken<Map<String,Massage>>() {}.getType());
+        if(data==null || data.size()==0){
+            Toast.makeText(MainActivity.this, "没有存储数据",Toast.LENGTH_SHORT).show();
+            return;
+        }
+        ArrayList<Massage> list = new ArrayList<Massage>(data.values());
+        ArchiveWindow window = new ArchiveWindow(this,list);
+        window.showAtBottom(btnRead);
+       // window.showAtLocation(contentView,100,100,100);
+    }
     private void startTimeFn() {
         String minutes = edTimer.getText().toString();
         if ("".equals(minutes)) {
@@ -295,6 +379,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         edTimer = (EditText) this.findViewById(R.id.timer);
         btnTimer = (Button) this.findViewById(R.id.btn_timer);
         btnTimer.setOnClickListener(this);
+
+        edSaveName = (EditText) this.findViewById(R.id.save_name);
+        btnSave = (Button) this.findViewById(R.id.save_btn);
+        btnRead = (Button) this.findViewById(R.id.read_btn);
+
+        btnSave.setOnClickListener(this);
+        btnRead.setOnClickListener(this);
+
     }
 
     /**

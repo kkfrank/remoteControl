@@ -8,6 +8,7 @@ import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.text.format.Formatter;
 
+
 public class WifiHelp {
 
     public static boolean isWifiConnect(Context mContext) {

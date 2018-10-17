@@ -16,6 +16,6 @@ public class Util {
     }
 
     public static void main(String args[]){
-        System.out.println(Arrays.toString(hexStringToByteArray("ff")));
+        System.out.println(Arrays.toString(hexStringToByteArray("01")));
     }
 }
