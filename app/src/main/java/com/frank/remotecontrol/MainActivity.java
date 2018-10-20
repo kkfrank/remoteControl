@@ -2,16 +2,23 @@ package com.frank.remotecontrol;
 
 import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.os.StrictMode;
+import android.support.design.widget.TabLayout;
+import android.support.v4.app.Fragment;
+import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.KeyEvent;
@@ -25,14 +32,20 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.frank.remotecontrol.model.Massage;
+import com.frank.remotecontrol.service.SocketService;
 import com.frank.remotecontrol.socket.SocketTransceiver;
 import com.frank.remotecontrol.socket.TcpClient;
+import com.frank.remotecontrol.utils.Constants;
 import com.frank.remotecontrol.utils.ListDataSave;
 import com.frank.remotecontrol.utils.SPUtils;
 import com.frank.remotecontrol.utils.Util;
 import com.frank.remotecontrol.utils.WifiHelp;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
@@ -43,7 +56,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Timer;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener, BlankFragment.OnFragmentInteractionListener {
+    private TabLayout mTabLayout;
+    private ViewPager mVpContent;
+
 
     private int PORT = 8899;
     private Button bnConnect;
@@ -61,7 +77,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     //private ScheduleTaskReceiver scheduleTaskReceiver;
     public static final int SEND_DATA =1;
     private ScheduleNotification scheduleNotification;
-   // public final static String ACTION_SCHEDULE_RECEIVER = "com.broadcast.schedule_receiver";
+
+    private ServiceConnection sc;
+    public SocketService socketService;
+
+    // public final static String ACTION_SCHEDULE_RECEIVER = "com.broadcast.schedule_receiver";
 
     private Handler handler = new Handler(Looper.getMainLooper());
 
@@ -134,6 +154,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.activity_main);
 
+//        ArrayList fragmentList = new ArrayList<>();
+//        ArrayList list_Title = new ArrayList<>();
+//        fragmentList.add(new OneFragment());
+//        fragmentList.add(new TwoFragment());
+//        list_Title.add("one");
+//        list_Title.add("two");
+//        viewpager.setAdapter(new MyPagerAdapter(getSupportFragmentManager(),HelpCenterActivity.this,fragmentList,list_Title));
+//        tablayout.setupWithViewPager(viewpager);//此方法就是让tablayout和ViewPager联动
+
+
         if (android.os.Build.VERSION.SDK_INT > 9) {
             StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
             StrictMode.setThreadPolicy(policy);
@@ -144,14 +174,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 //        setSupportActionBar(toolbar);
 
         initView();
+        initTab();
         registerBrodcastReceiver();
 
 		String ip = WifiHelp.getWifiRouteIPAddress(this);
 		//ip="10.86.35.77";
+        ip="192.168.1.12";
 		edIP.setText(ip);
 		edPort.setText(Integer.toString(PORT));
 
         refreshUI(false);
+        EventBus.getDefault().register(this);
+        bindSocketService();
+
     }
 
     @Override
@@ -159,6 +194,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         unregisterReceiver(wifiChangeReceiver);
         client.disconnect();
         super.onDestroy();
+
+        unbindService(sc);
+        Intent intent = new Intent(getApplicationContext(), SocketService.class);
+        stopService(intent);
+        EventBus.getDefault().unregister(this);
     }
 
     Handler handlerExit = new Handler() {
@@ -312,19 +352,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
      * 设置IP和端口地址,连接或断开
      */
     public void connect() {
-        if (client.isConnected()) {
-            // 断开连接
-            client.disconnect();
-        } else {
-            try {
-                String hostIP = edIP.getText().toString();
-                int port = Integer.parseInt(edPort.getText().toString());
-                client.connect(hostIP, port);
-            } catch (NumberFormatException e) {
-                Toast.makeText(this, "端口错误", Toast.LENGTH_SHORT).show();
-                e.printStackTrace();
-            }
-        }
+//        if (client.isConnected()) {
+//            // 断开连接
+//            client.disconnect();
+//        } else {
+//            try {
+//                String hostIP = edIP.getText().toString();
+//                int port = Integer.parseInt(edPort.getText().toString());
+//                client.connect(hostIP, port);
+//            } catch (NumberFormatException e) {
+//                Toast.makeText(this, "端口错误", Toast.LENGTH_SHORT).show();
+//                e.printStackTrace();
+//            }
+//        }
     }
 
     /**
@@ -332,12 +372,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
      */
     public void sendStr() {
         try {
-			if(!client.isConnected()){
-				Toast.makeText(MainActivity.this, "未连接",Toast.LENGTH_SHORT).show();
-			}
+//			if(!client.isConnected()){
+//				Toast.makeText(MainActivity.this, "未连接",Toast.LENGTH_SHORT).show();
+//			}
+
             String data = edData.getText().toString();
-			byte[] buf = Util.hexStringToByteArray(data);
-            client.getTransceiver().send(buf);
+			//byte[] buf = Util.hexStringToByteArray(data);
+           // client.getTransceiver().send(buf);
+            socketService.sendOrder(data);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -389,6 +431,28 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     }
 
+    private void initTab(){
+        mTabLayout = (TabLayout) findViewById(R.id.tablayout);
+        mVpContent = (ViewPager) findViewById(R.id.viewpager);
+
+        List mTitles =new ArrayList();
+        mTitles.add("tab1");
+        mTitles.add("tab2");
+        mTitles.add("tab3");
+        ArrayList mFragments = new ArrayList();
+        for (int i = 0; i < mTitles.size(); i++) {
+            BlankFragment fragment = new BlankFragment();
+//            Bundle bundle = new Bundle();
+//            bundle.putString(ContentFragment.TEXT, mTitles[i]);
+//            fragment.setArguments(bundle);
+            mFragments.add(fragment);//添加到fragment中
+        }
+
+        TabPagerAdapter tabAdapter = new TabPagerAdapter(getSupportFragmentManager(),MainActivity.this, mFragments, mTitles);
+        mVpContent.setAdapter(tabAdapter);//为viewPager设置adapter
+        mTabLayout.setupWithViewPager(mVpContent);//将TabLayout和ViewPager关联
+
+    }
     /**
      * 清空接收框
      */
@@ -468,4 +532,39 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 //        }
 //    }
 
+    private void bindSocketService() {
+        String hostIP = edIP.getText().toString();
+        String port =edPort.getText().toString();
+
+        Intent startIntent = new Intent(this,SocketService.class);
+        startIntent.putExtra(Constants.INTENT_IP,hostIP);
+        startIntent.putExtra(Constants.INTENT_PORT,port);
+        startService(startIntent);
+
+        /*通过binder拿到service*/
+        sc = new ServiceConnection() {
+            @Override
+            public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
+                SocketService.SocketBinder binder = (SocketService.SocketBinder) iBinder;
+                socketService = binder.getService();
+            }
+            @Override
+            public void onServiceDisconnected(ComponentName componentName) {
+            }
+        };
+
+        Intent intent = new Intent(getApplicationContext(), SocketService.class);
+        bindService(intent, sc, BIND_AUTO_CREATE);
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onMessageEvent(MessageEvent event) {
+        /* Do something */
+        txReceive.append(event.getMsg());
+    };
+
+    @Override
+    public void onFragmentInteraction(Uri uri) {
+
+    }
 }

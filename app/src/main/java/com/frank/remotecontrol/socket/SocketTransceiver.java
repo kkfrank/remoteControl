@@ -1,5 +1,7 @@
 package com.frank.remotecontrol.socket;
 
+import com.frank.remotecontrol.utils.Util;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -125,7 +127,8 @@ public abstract class SocketTransceiver implements Runnable {
 				//in.readUTF();
 				int len = in.read(bytes);
 				if(len != -1){
-					String s = new String(bytes,0,len);
+					//String s = new String(bytes,0,len);
+					String s = Util.bytesToHex(new String(bytes,0,len).getBytes());
 					this.onReceive(addr, s);
 				}else{
 					runFlag = false;
