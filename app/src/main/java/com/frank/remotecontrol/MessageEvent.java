@@ -3,6 +3,8 @@ package com.frank.remotecontrol;
 public class MessageEvent {
     private String tag;
     private String msg;
+    private Object data;
+
     public MessageEvent(){
 
     }
@@ -20,5 +22,13 @@ public class MessageEvent {
 
     public void setMsg(String msg) {
         this.msg = msg;
+    }
+
+    public Object getData() {
+        return data;
+    }
+
+    public void setData(Object data) {
+        this.data = data;
     }
 }

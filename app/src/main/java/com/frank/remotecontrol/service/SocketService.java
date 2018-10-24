@@ -66,12 +66,13 @@ public class SocketService extends Service{
         port = intent.getStringExtra(Constants.INTENT_PORT);
 
         /*初始化socket*/
-        initSocket();
+        initSocket(ip,port);
         return super.onStartCommand(intent, flags, startId);
     }
 
     /*初始化socket*/
-    private void initSocket() {
+    public void initSocket(final String ip,final String port) {
+
         if (socket == null && connectThread == null) {
             connectThread = new Thread(new Runnable() {
                 @Override
@@ -103,6 +104,9 @@ public class SocketService extends Service{
                             stopSelf();
                         } else if (e instanceof ConnectException) {
                             toastMsg("连接异常或被拒绝，请检查");
+                            stopSelf();
+                        }else{
+                            toastMsg("连接异常"+e.getMessage());
                             stopSelf();
                         }
                     }
@@ -146,6 +150,7 @@ public class SocketService extends Service{
                 runFlag = false;
             }
         }
+        stopSelf();
     }
    /*发送数据*/
     public void sendOrder(final String order) {
@@ -174,6 +179,9 @@ public class SocketService extends Service{
         } else {
             toastMsg("socket连接错误,请重试");
         }
+    }
+    public boolean isConnected(){
+        return socket!=null && socket.isConnected();
     }
 
     //private
@@ -238,8 +246,11 @@ public class SocketService extends Service{
         }
         /*重新初始化socket*/
         if (isReConnect) {
-            initSocket();
+         //   initSocket();
         }
+        MessageEvent msg = new MessageEvent();
+        msg.setTag(Constants.UNCONNET);
+        EventBus.getDefault().post(msg);
 
     }
 

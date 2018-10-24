@@ -123,7 +123,7 @@ public class ScheduleNotification {
                 int buttonId = intent.getIntExtra(INTENT_BUTTONID_TAG, 0);
                 switch (buttonId) {
                     case BUTTON_PALY_ID:
-                        ((MainActivity)context).sendBytes(new byte[]{0x02, 0x55});
+                        //((MainActivity)context).sendBytes(new byte[]{0x02, 0x55});
 
                         contentView.setTextViewText(R.id.btn_stop_schedule,"停止");
                        // ((MainActivity)context).connect();
@@ -146,7 +146,7 @@ public class ScheduleNotification {
             isPlay = true;
             contentView.setTextViewText(R.id.btn_stop_schedule,"停止");
         }
-        ((MainActivity)context).connect();
+       // ((MainActivity)context).connect();
         notificationManager.notify(NOTIFICATION_ID, notification);
     }
 

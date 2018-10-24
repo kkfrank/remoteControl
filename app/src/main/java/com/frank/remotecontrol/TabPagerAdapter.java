@@ -19,6 +19,7 @@ public class TabPagerAdapter extends FragmentPagerAdapter {
         this.list_Title = list_Title;
     }
 
+
     @Override
     public Fragment getItem(int position) {
         return fragmentList.get(position);

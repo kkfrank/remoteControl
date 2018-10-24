@@ -105,31 +105,32 @@
             android:text="关灯"/>
     </LinearLayout>
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginBottom="20dp">
-        <Button
-            android:id="@+id/lightquick"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="快闪"
-            android:layout_marginRight="20dp"/>
-        <Button
-            android:id="@+id/lightslow"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="wrap_content"
-            android:text="慢闪"/>
-    </LinearLayout>
+    <!--<LinearLayout-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:orientation="horizontal"-->
+        <!--android:layout_marginBottom="20dp">-->
+        <!--<Button-->
+            <!--android:id="@+id/lightquick"-->
+            <!--android:layout_width="0dp"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:layout_weight="1"-->
+            <!--android:text="快闪"-->
+            <!--android:layout_marginRight="20dp"/>-->
+        <!--<Button-->
+            <!--android:id="@+id/lightslow"-->
+            <!--android:layout_width="0dp"-->
+            <!--android:layout_weight="1"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:text="慢闪"/>-->
+    <!--</LinearLayout>-->
 
     <!--<LinearLayout-->
         <!--android:layout_width="match_parent"-->
         <!--android:layout_height="wrap_content"-->
         <!--android:layout_marginBottom="20dp"-->
         <!--android:orientation="horizontal">-->
+
         <!--<EditText-->
             <!--android:id="@+id/save_name"-->
             <!--android:layout_width="0dp"-->
@@ -139,12 +140,14 @@
             <!--android:textColor="#fff"-->
             <!--android:textColorHint="#fff"-->
             <!--android:hint="要保存的数据" />-->
+
         <!--<Button-->
             <!--android:id="@+id/save_btn"-->
             <!--android:layout_width="0dp"-->
             <!--android:layout_height="wrap_content"-->
             <!--android:layout_weight="1"-->
             <!--android:text="保存" />-->
+
         <!--<Button-->
             <!--android:id="@+id/read_btn"-->
             <!--android:layout_width="0dp"-->
@@ -197,7 +200,8 @@
                 android:id="@+id/tx_receive"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-                android:textColor="#fff"/>
+                android:textColor="#fff"
+                android:text="1234"/>
         </ScrollView>
     </LinearLayout>
 

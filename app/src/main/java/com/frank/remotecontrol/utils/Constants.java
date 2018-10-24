@@ -7,6 +7,9 @@ public class Constants {
     public static final String INTENT_PORT ="PORT";
 
     public static final String CONNET_SUCCESS ="CONNET_SUCCESS";
+    public static final String UNCONNET ="UNCONNET";
 
     public static final String RECEIVE_SUCCESS ="RECEIVE_SUCCESS";
+
+    public static final String LOAD_MASSAGE ="LOAD_MASSAGE";
 }

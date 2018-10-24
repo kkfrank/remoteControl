@@ -15,6 +15,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.frank.remotecontrol.model.Massage;
+import com.frank.remotecontrol.patternview.PatternView;
+import com.frank.remotecontrol.patternview.utils.CellUtils;
+import com.frank.remotecontrol.utils.Constants;
+
+import org.greenrobot.eventbus.EventBus;
 
 import java.util.List;
 import java.util.Map;
@@ -44,12 +49,17 @@ public class ArchiveWindow extends PopupWindow implements View.OnClickListener {
         view = LayoutInflater.from(context).inflate(R.layout.archive_popwin,null);
         setContentView(view);
        // setAnimationStyle(R.style.archive_item);
+
         this.data=data;
         initLisView();
+        int h2= view.getHeight();
     }
-    public void showAtBottom(View view) {
+    public void showAtBottom(View viewAlign) {
         //弹窗位置设置
-        showAsDropDown(view, Math.abs((view.getWidth() - getWidth()) / 2), 10);
+        int h = this.getHeight();
+        int h2= view.getHeight()/2;
+        //showAsDropDown(view, Math.abs((view.getWidth() - getWidth()) / 2), -(view.getHeight()));
+        showAsDropDown(viewAlign, viewAlign.getWidth(), -(viewAlign.getHeight()+view.getHeight()));
         //showAtLocation(view, Gravity.TOP | Gravity.RIGHT, 10, 110);//有偏差
     }
 
@@ -84,6 +94,16 @@ public class ArchiveWindow extends PopupWindow implements View.OnClickListener {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
                 Massage massage  = data.get(position);
+                String patternString = massage.getOrders();
+
+//                patternView.setPattern(PatternView.DisplayMode.Correct,
+//                CellUtils.intArrayToPattern(patternString, patternView.getCellManager()));
+
+                MessageEvent msg = new MessageEvent();
+                msg.setTag(Constants.LOAD_MASSAGE);
+                msg.setData(massage);
+                EventBus.getDefault().post(msg);
+
                 ArchiveWindow.this.dismiss();
                 Toast.makeText(context,massage.getName(),Toast.LENGTH_SHORT).show();
             }

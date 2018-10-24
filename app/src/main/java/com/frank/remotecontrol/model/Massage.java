@@ -4,7 +4,9 @@ import java.util.List;
 
 public class Massage {
     private String name;
-    private List<String> orders;//顺序
+    //private List<String> orders;//顺序
+
+    private String orders;
     private String interval;//间隔
     private String intensitt;//强度
 
@@ -16,11 +18,11 @@ public class Massage {
         this.name = name;
     }
 
-    public List<String> getOrders() {
+    public String getOrders() {
         return orders;
     }
 
-    public void setOrders(List<String> orders) {
+    public void setOrders(String orders) {
         this.orders = orders;
     }
 
